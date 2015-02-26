@@ -8,6 +8,9 @@
 
 #import <SpriteKit/SpriteKit.h>
 
-@interface LevelTwo : SKScene
+@interface LevelTwo : SKScene <UIGestureRecognizerDelegate>
+{
+    UIRotationGestureRecognizer *rotationGesture;
+}
 
 @end

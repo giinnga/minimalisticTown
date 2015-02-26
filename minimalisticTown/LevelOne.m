@@ -37,28 +37,37 @@
     background.zPosition = 1;
     [self addChild:background];
     
+//    Casa
+    
+    SKSpriteNode *casa = [SKSpriteNode spriteNodeWithImageNamed:@"Casa-Level1"];
+    casa.position = CGPointMake(self.size.width/3.5, self.size.height/2.5);
+    casa.zPosition = 2;
+    [self addChild:casa];
+    
 //    Cloud
     
     _cloudNode = [SKSpriteNode spriteNodeWithImageNamed:@"Nuvem-Level1"];
-    _cloudNode.position = CGPointMake(0.3 * self.size.width, self.size.height - _cloudNode.size.height * 0.6);
-    _cloudNode.zPosition = 2;
+    _cloudNode.position = CGPointMake(casa.position.x, self.size.height - _cloudNode.size.height);
+    _cloudNode.zPosition = 3;
     _cloudNode.name = @"cloud";
     [self addChild:_cloudNode];
     
     [self rain];
     
-    
-//    Balao
+//    Balão
     
     _balao = [SKSpriteNode spriteNodeWithImageNamed:@"Balao-Level1"];
-    _balao.position = CGPointMake(0.52 * self.size.width, 0.52 * self.size.height);
+    _balao.position = CGPointMake(casa.position.x + casa.size.width/1.9,
+                                  casa.position.y + casa.size.height/5);
     _balao.zPosition = 2;
     _balao.hidden = YES;
     [self addChild:_balao];
     
+//    Ações Balão
+    
     SKAction *hide = [SKAction performSelector:@selector(hide) onTarget:self];
-    SKAction *waitWhileShown = [SKAction waitForDuration:5];
-    SKAction *waitWhileHidden = [SKAction waitForDuration:10];
+    SKAction *waitWhileShown = [SKAction waitForDuration:1];
+    SKAction *waitWhileHidden = [SKAction waitForDuration:1];
     [_balao runAction:[SKAction repeatActionForever:
                        [SKAction sequence:@[waitWhileHidden,hide,waitWhileShown,hide]]] withKey:@"hideAction"];
 }
@@ -79,9 +88,10 @@
     
     for (UITouch *touch in touches) {
         CGPoint location = [touch locationInNode:self];
+        CGPoint previousLocation = [touch previousLocationInNode:self];
         if (_cloud) {
-            SKAction *move = [SKAction moveToX:location.x duration:0];
-            [_cloudNode runAction:move];
+            _cloudNode.position = CGPointMake(_cloudNode.position.x + location.x - previousLocation.x,
+                                              _cloudNode.position.y);
             _explosionEmitter.position = _cloudNode.position;
         }
     }
@@ -122,7 +132,7 @@
     _explosionEmitter = [NSKeyedUnarchiver unarchiveObjectWithFile:explosionPath];
     
     _explosionEmitter.position = position;
-    _explosionEmitter.zPosition = 1;
+    _explosionEmitter.zPosition = 2;
     [self addChild:_explosionEmitter];
 }
 
