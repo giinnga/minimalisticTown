@@ -6,6 +6,8 @@
 //  Copyright (c) 2015 Victor Souza. All rights reserved.
 //
 
+@import CoreMotion;
+
 #import "LevelOne.h"
 #import "LevelTwo.h"
 
@@ -13,13 +15,17 @@
 {
     BOOL _cloud;
     BOOL _hideIt;
+    BOOL _houseMove;
     
     SKSpriteNode *_cloudNode;
     SKSpriteNode *_balao;
+    SKSpriteNode *_casa;
     
     SKEmitterNode *_explosionEmitter;
     
     SKTexture *_backgroundTexture;
+    
+    CMMotionManager *_motionManager;
 }
 
 -(void)didMoveToView:(SKView *)view {
@@ -28,6 +34,7 @@
     
     _cloud = NO;
     _hideIt = YES;
+    _houseMove = YES;
     
 //    Background
     
@@ -39,15 +46,15 @@
     
 //    Casa
     
-    SKSpriteNode *casa = [SKSpriteNode spriteNodeWithImageNamed:@"Casa-Level1"];
-    casa.position = CGPointMake(self.size.width/3.5, self.size.height/2.5);
-    casa.zPosition = 2;
-    [self addChild:casa];
+    _casa = [SKSpriteNode spriteNodeWithImageNamed:@"Casa-Level1"];
+    _casa.position = CGPointMake(self.size.width/3.5, self.size.height/2.5);
+    _casa.zPosition = 2;
+    [self addChild:_casa];
     
 //    Cloud
     
     _cloudNode = [SKSpriteNode spriteNodeWithImageNamed:@"Nuvem-Level1"];
-    _cloudNode.position = CGPointMake(casa.position.x, self.size.height - _cloudNode.size.height);
+    _cloudNode.position = CGPointMake(_casa.position.x, self.size.height - _cloudNode.size.height);
     _cloudNode.zPosition = 3;
     _cloudNode.name = @"cloud";
     [self addChild:_cloudNode];
@@ -57,8 +64,8 @@
 //    Balão
     
     _balao = [SKSpriteNode spriteNodeWithImageNamed:@"Balao-Level1"];
-    _balao.position = CGPointMake(casa.position.x + casa.size.width/1.9,
-                                  casa.position.y + casa.size.height/5);
+    _balao.position = CGPointMake(_casa.position.x + _casa.size.width/1.9,
+                                  _casa.position.y + _casa.size.height/5);
     _balao.zPosition = 2;
     _balao.hidden = YES;
     [self addChild:_balao];
@@ -70,6 +77,28 @@
     SKAction *waitWhileHidden = [SKAction waitForDuration:1];
     [_balao runAction:[SKAction repeatActionForever:
                        [SKAction sequence:@[waitWhileHidden,hide,waitWhileShown,hide]]] withKey:@"hideAction"];
+    
+//    Accelerometer
+    
+    _motionManager = [[CMMotionManager alloc] init];
+    _motionManager.accelerometerUpdateInterval = 0.2; // tweak the sensitivity of intervals
+    [_motionManager startAccelerometerUpdates];
+}
+
+-(void)didEvaluateActions {
+    if (_motionManager.accelerometerData.acceleration.x >= 0.9 &&
+        _motionManager.accelerometerData.acceleration.x <= 1.1 &&
+        _houseMove == YES) {
+        SKAction *houseMove = [SKAction moveByX:1 y:0 duration:0.1];
+        [_casa runAction:houseMove];
+        [_balao runAction:houseMove];
+    }
+    if(_casa.position.x >= self.size.width - _casa.size.width/1.5) {
+        if (_houseMove) {
+            _houseMove = NO;
+            [self nextLevel];
+        }
+    }
 }
 
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
@@ -99,8 +128,11 @@
     if ((_cloudNode.position.x > self.size.width - _cloudNode.size.width/2)) {
         _hideIt = NO;
         _balao.hidden = YES;
+        SKTransition *transition = [SKTransition fadeWithDuration:0.5];
         
-        [self nextLevel];
+        SKScene *scene = [[LevelTwo alloc] initWithSize:self.size];
+        
+        [self.view presentScene:scene transition:transition];
     }
 }
 
@@ -149,9 +181,12 @@
     [self.view presentScene:scene transition:transition];
 }
 
+-(void)willMoveFromView:(SKView *)view {
+    [_motionManager stopAccelerometerUpdates];
+}
+
 -(void)update:(CFTimeInterval)currentTime {
     /* Called before each frame is rendered */
-    
 }
 
 @end
