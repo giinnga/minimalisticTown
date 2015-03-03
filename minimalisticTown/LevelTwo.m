@@ -118,7 +118,7 @@
     }
 }
 
--(void) handleRotation: (UIRotationGestureRecognizer *) recognizer  {
+-(void)handleRotation: (UIRotationGestureRecognizer *) recognizer  {
     if(_escadaRotate) {
         SKAction *rotate = [SKAction rotateToAngle:M_PI/2 duration:0.5];
         rotate.timingMode = SKActionTimingEaseOut;

@@ -9,5 +9,8 @@
 #import <SpriteKit/SpriteKit.h>
 
 @interface LevelOne : SKScene
+{
+    UIPinchGestureRecognizer *zoomPinch;
+}
 
 @end

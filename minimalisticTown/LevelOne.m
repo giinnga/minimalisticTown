@@ -28,6 +28,26 @@
     CMMotionManager *_motionManager;
 }
 
+static inline CGPoint CGPointAdd(CGPoint point1, CGPoint point2) {
+    return CGPointMake(point1.x + point2.x, point1.y + point2.y);
+}
+
+static inline CGPoint CGPointSubtract(CGPoint point1, CGPoint point2) {
+    return CGPointMake(point1.x - point2.x, point1.y - point2.y);
+}
+
+static inline GLKVector2 GLKVector2FromCGPoint(CGPoint point) {
+    return GLKVector2Make(point.x, point.y);
+}
+
+static inline CGPoint CGPointFromGLKVector2(GLKVector2 vector) {
+    return CGPointMake(vector.x, vector.y);
+}
+
+static inline CGPoint CGPointMultiplyScalar(CGPoint point, CGFloat value) {
+    return CGPointFromGLKVector2(GLKVector2MultiplyScalar(GLKVector2FromCGPoint(point), value));
+}
+
 -(void)didMoveToView:(SKView *)view {
   
 //    Setup your scene here
@@ -83,10 +103,45 @@
     _motionManager = [[CMMotionManager alloc] init];
     _motionManager.accelerometerUpdateInterval = 0.2; // tweak the sensitivity of intervals
     [_motionManager startAccelerometerUpdates];
+    
+//    Pinch recognizer
+    
+    zoomPinch = [[UIPinchGestureRecognizer alloc]
+                       initWithTarget:self action:@selector(handleZoomFrom:)];
+    [view addGestureRecognizer:zoomPinch];
+}
+
+-(void)handleZoomFrom:(UIPinchGestureRecognizer *)recognizer
+{
+    CGPoint anchorPoint = [recognizer locationInView:recognizer.view];
+    anchorPoint = [self convertPointFromView:anchorPoint];
+    
+    if (recognizer.state == UIGestureRecognizerStateBegan) {
+        
+        // No code needed for zooming...
+        
+    } else if (recognizer.state == UIGestureRecognizerStateChanged) {
+        
+        CGPoint anchorPointInMySkNode = [_casa convertPoint:anchorPoint fromNode:self];
+        
+        [_casa setScale:(_casa.xScale * recognizer.scale)];
+        
+        CGPoint mySkNodeAnchorPointInScene = [self convertPoint:anchorPointInMySkNode fromNode:_casa];
+        CGPoint translationOfAnchorInScene = CGPointSubtract(anchorPoint, mySkNodeAnchorPointInScene);
+        
+        _casa.position = CGPointAdd(_casa.position, translationOfAnchorInScene);
+        
+        recognizer.scale = 1.0;
+        
+    } else if (recognizer.state == UIGestureRecognizerStateEnded) {
+        
+        // No code needed here for zooming...
+        
+    }
 }
 
 -(void)didEvaluateActions {
-    if (_motionManager.accelerometerData.acceleration.x >= 0.9 &&
+    if (_motionManager.accelerometerData.acceleration.x >= 0.7 &&
         _motionManager.accelerometerData.acceleration.x <= 1.1 &&
         _houseMove == YES) {
         SKAction *houseMove = [SKAction moveByX:1 y:0 duration:0.1];
